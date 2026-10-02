@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Пакет в школу</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --ink: #243027;
+      --muted: #5d6b62;
+      --card: #fffaf3;
+      --line: #e4d8c8;
+      --green: #2f6f4e;
+      --green-soft: #e7f3ec;
+      --warn: #8a5a12;
+      --warn-soft: #fff4df;
+      --bad: #8d3b32;
+      --bad-soft: #fdeceb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 32px; line-height: 1.1; margin: 8px 0 8px; }
+    h2 { font-size: 22px; margin: 0 0 10px; }
+    p { line-height: 1.45; }
+    .lead { color: var(--muted); margin-top: 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      margin: 14px 0;
+    }
+    label { display: block; font-size: 14px; margin: 12px 0 6px; color: var(--muted); }
+    input, select, textarea, button {
+      font: inherit;
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 12px;
+      background: white;
+      color: var(--ink);
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button {
+      background: var(--green);
+      color: white;
+      border: 0;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    button.ghost { background: transparent; color: var(--green); border: 1px solid var(--green); }
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .choice {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: left;
+      color: var(--ink);
+      margin: 0;
+    }
+    .choice.on { border-color: var(--green); background: var(--green-soft); }
+    .item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); }
+    .item input { width: auto; margin-top: 4px; }
+    .tag { display: inline-block; border-radius: 999px; padding: 3px 8px; font-size: 12px; }
+    .ok { background: var(--green-soft); color: var(--green); }
+    .wait { background: var(--warn-soft); color: var(--warn); }
+    .no { background: var(--bad-soft); color: var(--bad); }
+    #ai-log { white-space: pre-wrap; }
+    .msg { background: #f7f1e7; border-radius: 12px; padding: 10px; margin: 8px 0; }
+    small { color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Пакет в школу</h1>
+  <p class="lead">Собери летние документы так, чтобы не сходить в школу зря. Это черновик для родителя, не официальная подача.</p>
+
+  <section class="card">
+    <h2>1. Какой случай</h2>
+    <div class="choices">
+      <button class="choice on" id="mode-transfer" type="button">Перевод в другую школу</button>
+      <button class="choice" id="mode-first" type="button">После записи в 1 класс</button>
+    </div>
+    <div class="row">
+      <div>
+        <label>Класс</label>
+        <input id="grade" value="7" />
+      </div>
+      <div>
+        <label>Язык обучения</label>
+        <select id="lang">
+          <option>русский</option>
+          <option>кыргызский</option>
+          <option>английский</option>
+        </select>
+      </div>
+    </div>
+    <label>Новая школа</label>
+    <input id="school" placeholder="например, школа №61" />
+    <div class="row">
+      <div>
+        <label>Ребёнок</label>
+        <input id="child" placeholder="ФИО" />
+      </div>
+      <div>
+        <label>Родитель</label>
+        <input id="parent" placeholder="ФИО" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Фото 3×4</h2>
+    <input id="photo" type="file" accept="image/*" />
+    <p id="photo-note">Снимок проверяется только на этом телефоне.</p>
+  </section>
+
+  <section class="card">
+    <h2>3. Что уже есть дома</h2>
+    <div id="checks"></div>
+  </section>
+
+  <section class="card">
+    <h2>4. Что сказать родителю</h2>
+    <div id="verdict"></div>
+    <button id="copy-app" type="button">Скопировать заявление</button>
+    <pre id="application"></pre>
+  </section>
+
+  <section class="card">
+    <h2>Спросить помощника</h2>
+    <p class="lead">Он отвечает по правилам перевода: место сначала, личное дело потом, медсправки после зачисления.</p>
+    <textarea id="question" placeholder="Например: можно ли уже забирать личное дело?"></textarea>
+    <button id="ask" type="button">Спросить</button>
+    <div id="ai-log"></div>
+    <label>Свой ключ xAI, если захочешь живую модель. Не обязателен.</label>
+    <input id="key" type="password" placeholder="хранится только в этом браузере" />
+    <small>Без ключа работает местный помощник. Ключ никуда в репозиторий не клади.</small>
+  </section>
+</main>
+<script>
+const state = { mode: "transfer", photoOk: null, have: {} };
+
+const packs = {
+  transfer: [
+    ["place", "Новая школа подтвердила место", "Сначала это. Пока места нет, из старой школы ничего не забирают."],
+    ["passport", "Паспорт родителя", "Нужен, чтобы подтвердить, кто подаёт заявление."],
+    ["birth", "Свидетельство о рождении или паспорт ребёнка", "Для сверки личности. С 14 лет обычно паспорт."],
+    ["grades", "Табель или справка об успеваемости", "Берётся в старой школе после согласия на перевод."],
+    ["file", "Личное дело", "Тоже после подтверждения места. С 2025 года дело могут вести в АИС «Күндөлүк»."],
+    ["address", "Адресная справка, если школа просит участок", "Не у всех школ. Спроси, прежде чем идти в ЦОН."],
+    ["med", "Медсведения, если новая школа попросила", "Не неси заранее «на всякий случай», если не просили."]
+  ],
+  first: [
+    ["approved", "Электронная заявка одобрена", "Место бронируют через портал, бумажный пакет несут после этого."],
+    ["photo", "Фото ребёнка 3×4", "Школа просит его для оформления, обычно две штуки."],
+    ["health", "Медсправка о состоянии здоровья", "Оригинал из ЦСМ, форма, которую назовёт школа."],
+    ["vaccines", "Справка о прививках", "Второй оригинал. Без неё оформление часто не закрывают."],
+    ["birth", "Свидетельство, показать оригинал", "Копию могут снять на месте, нотариус обычно не нужен."]
+  ]
+};
+
+const modeTransfer = document.getElementById("mode-transfer");
+const modeFirst = document.getElementById("mode-first");
+function setMode(mode) {
+  state.mode = mode;
+  modeTransfer.classList.toggle("on", mode === "transfer");
+  modeFirst.classList.toggle("on", mode === "first");
+  draw();
+}
+modeTransfer.onclick = () => setMode("transfer");
+modeFirst.onclick = () => setMode("first");
+
+function draw() {
+  const box = document.getElementById("checks");
+  box.innerHTML = "";
+  packs[state.mode].forEach(([id, title, why]) => {
+    const row = document.createElement("label");
+    row.className = "item";
+    row.innerHTML = `<input type="checkbox" data-id="${id}" ${state.have[id] ? "checked" : ""}><span><b>${title}</b><br><small>${why}</small></span>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll("input").forEach(el => {
+    el.onchange = () => { state.have[el.dataset.id] = el.checked; verdict(); };
+  });
+  verdict();
+}
+
+document.getElementById("photo").onchange = (e) => {
+  const file = e.target.files[0];
+  const note = document.getElementById("photo-note");
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const ratio = img.width / img.height;
+    const portrait = ratio > 0.65 && ratio < 0.85;
+    state.photoOk = portrait;
+    note.innerHTML = portrait
+      ? `<span class="tag ok">похоже на 3×4</span> ${img.width}×${img.height}. Всё равно распечатай нормальный размер.`
+      : `<span class="tag no">не похоже на 3×4</span> ${img.width}×${img.height}. Нужен портрет примерно 3 на 4, не документ и не общий снимок.`;
+    verdict();
+  };
+  img.src = URL.createObjectURL(file);
+};
+
+function val(id) { return document.getElementById(id).value.trim(); }
+
+function verdict() {
+  const missing = packs[state.mode].filter(([id]) => !state.have[id]);
+  const firstMissing = missing[0];
+  const box = document.getElementById("verdict");
+  if (state.mode === "transfer" && !state.have.place) {
+    box.innerHTML = `<span class="tag wait">рано нести пакет</span><p>Сначала добейся, что в «${val("school") || "новой школе"}» есть место. Личное дело и табель из старой школы пока не забирай.</p>`;
+  } else if (!missing.length) {
+    box.innerHTML = `<span class="tag ok">пакет собран</span><p>Можно идти со заявлением. Оригиналы школа сверит сама. Этот сайт место не бронирует.</p>`;
+  } else {
+    box.innerHTML = `<span class="tag wait">ещё не всё</span><p>Следующее: ${firstMissing[1]}. ${firstMissing[2]}</p>`;
+  }
+  const child = val("child") || "________________";
+  const parent = val("parent") || "________________";
+  const school = val("school") || "________________";
+  const text = state.mode === "transfer"
+    ? `Директору ${school}\nот родителя ${parent}\n\nЗаявление\n\nПрошу принять моего ребёнка ${child} в ${val("grade") || "___"} класс, язык обучения: ${val("lang")}.\nПрошу подтвердить наличие места. Личное дело и сведения об успеваемости обязуюсь предоставить после подтверждения, из прежней школы.\n\nДата ________  Подпись ________`
+    : `Директору ${school}\nот родителя ${parent}\n\nК заявке на 1 класс прилагаю фотографию ребёнка ${child} и медицинские справки. Оригинал свидетельства о рождении готов показать для сверки.\n\nДата ________  Подпись ________`;
+  document.getElementById("application").textContent = text;
+}
+["grade", "school", "child", "parent", "lang"].forEach(id => {
+  document.getElementById(id).oninput = verdict;
+});
+
+document.getElementById("copy-app").onclick = async () => {
+  await navigator.clipboard.writeText(document.getElementById("application").textContent);
+  document.getElementById("copy-app").textContent = "Скопировано";
+};
+
+function localAnswer(q) {
+  const text = q.toLowerCase();
+  if (text.includes("личное") || text.includes("дело")) return "Личное дело забирают после того, как новая школа подтвердила место. Раньше — лишний поход в старую школу.";
+  if (text.includes("фото")) return "Для оформления обычно просят 3×4, портрет. Снимок документа вместо лица не подойдёт.";
+  if (text.includes("мед") || text.includes("привив")) return "Медсправку и справку о прививках чаще несут уже после зачисления, оригиналом из ЦСМ. Если школа их не просила, не собирай их наугад.";
+  if (text.includes("первый") || text.includes("1 класс")) return "В первый класс место сначала бронируют электронной заявкой. Бумажный пакет — фото и две медсправки — несут после одобрения.";
+  if (text.includes("договор")) return "Для обычной государственной школы главный документ — заявление директору, не договор. Договор бывает у частной школы: его текст должен дать сама школа.";
+  return "Порядок один: место, потом заявление и документы личности, и только затем личное дело из старой школы. Напиши, перевод это или 1 класс, и чего именно не хватает.";
+}
+
+document.getElementById("ask").onclick = async () => {
+  const q = val("question");
+  if (!q) return;
+  const log = document.getElementById("ai-log");
+  log.innerHTML = `<div class="msg">${q}</div>`;
+  const key = val("key");
+  if (key) localStorage.setItem("paket-key", key);
+  let answer = localAnswer(q);
+  if (key) {
+    try {
+      const res = await fetch("https://api.x.ai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+        body: JSON.stringify({
+          model: "grok-4",
+          messages: [{ role: "system", content: "Ты помощник родителя в Бишкеке. Отвечай коротко по-русски. Не обещай, что сайт зачисляет ребёнка. Сначала место, потом личное дело." }, { role: "user", content: q }]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        answer = data.choices[0].message.content;
+      }
+    } catch (e) {
+      answer += "\n\nЖивая модель из браузера не ответила, поэтому выше местный ответ.";
+    }
+  }
+  log.innerHTML += `<div class="msg">${answer}</div>`;
+};
+const saved = localStorage.getItem("paket-key");
+if (saved) document.getElementById("key").value = saved;
+draw();
+</script>
+</body>
+</html>
